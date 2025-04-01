@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Contact Form API with SAM
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: nodejs18.x
+
+Resources:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: ContactFormApi
+      StageName: dev
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+
+  ValidateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/validate/app.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ContactSession
+      Events:
+        ValidateAPI:
+          Type: Api
+          Properties:
+            Path: /validate
+            Method: POST
+            RestApiId: !Ref ApiGateway
+
+  SendMailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/sendMail/app.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: ContactSession
+      Events:
+        SendMailAPI:
+          Type: Api
+          Properties:
+            Path: /send
+            Method: POST
+            RestApiId: !Ref ApiGateway
+      Environment:
+        Variables:
+          TO_ADDRESS: 4leafclover1214@gmail.com
+        
+  ContactSessionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ContactSession
+      AttributeDefinitions:
+        - AttributeName: sessionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sessionId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expireAt
+        Enabled: true
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/"
