@@ -60,7 +60,63 @@ const endMessage = useEndMessage();
 //サンクスページへのリダイレクトフラグ
 const thanks = ref(false);
 
+//フロント側でのリアルタイムバリデーション（PersonalDataFormコンポーネント）と、確認用画面へ行くときのバリーデションの2重で行う。
+// 確認用画面ではサーバー側にデータを送信して、バリデーションし、セッションidをもらうことでAPIの不正利用を防ぐ。
+const apiBaseUrl = "http://localhost:3001"; //ローカル用。本番ではコメントアウト
+let sessionId = ref("");
+
+
+const { validate, name, mail, content, nameChecked, mailChecked, contentChecked, } = useValidate();
+const { personalData } = usePersonalData();
+
+const validationPersonal = async () => {
+  try {
+    const res = await axios.post(`${apiBaseUrl}/validate`, {
+      name: name.value,
+      mail: mail.value,
+      content: content.value,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log(res);
+    return res.data;
+  } catch (err) {
+    if (err.response?.data?.errors) {
+      const errors = err.response.data.errors;
+      nameChecked.value = errors.find((e) => e.includes("お名前")) || "";
+      mailChecked.value = errors.find((e) => e.includes("メール")) || "";
+      contentChecked.value = errors.find((e) => e.includes("お問い合わせ")) || "";
+    } else {
+      console.error("バリデーション形式不明", err);
+    }
+    return false;
+  }
+};
+
 const toInquiry = async () => {
+  loader.value = true;
+  //フロントでのバリデーション
+  let validationResult = false;
+  validationResult = await validationPersonal();
+  console.log("validationResult", validationResult);
+  if (validationResult && validationResult.message === 'success') {
+    console.log('ここまで');
+    //バリデーションOKなら、確認画面へ遷移
+    validate.value = true;
+    if (validationResult.hasOwnProperty('sessionId') && validationResult.sessionId != null && validationResult.sessionId !== '') {
+      sessionId = validationResult.sessionId;
+    }
+  } else {
+    //バリデーションNGなら、エラーメッセージを表示
+    errors.value = 1;
+    endMessage.value = "入力内容に不備があります。ご確認ください。";
+  }
+  loader.value = false;
+};
+
+const submitAll = async () => {
   loader.value = true;
   //フロントでのバリデーション
   let validationResult = false;
@@ -77,6 +133,8 @@ const toInquiry = async () => {
 };
 
 const sendMail = async () => {
+  loader.value = true;
+  errors.value = 0;
   try {
     const response = await axios.get(
       "https://ikghifjp9k.execute-api.ap-northeast-1.amazonaws.com/production/mail/?name=" +
@@ -102,10 +160,6 @@ const sendMail = async () => {
     endMessage.value =
       "メールの送信に失敗しました。お手数おかけしますが、4leafclover1214@gamil.comまでお問い合わせください。";
   }
-};
-const submitAll = async () => {
-  loader.value = true;
-  errors.value = 0;
 };
 </script>
 

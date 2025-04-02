@@ -7,10 +7,10 @@
         type="text"
         placeholder="例) 本多 美苑"
         v-model="name"
-        v-show="!personalData"
+        v-show="!validate"
         @keydown.enter.prevent="enterPrevent"
       />
-      <p class="formCheckLabel" v-show="personalData">{{ name }}</p>
+      <p class="formCheckLabel" v-show="validate">{{ name }}</p>
       <br />
       <p class="formCaution" v-if="checkName != ''">{{ nameChecked }}</p>
     </dd>
@@ -27,19 +27,19 @@
         type="email"
         placeholder="例) example@gmail.com"
         v-model="mail"
-        v-show="!personalData"
+        v-show="!validate"
         @keydown.enter.prevent="enterPrevent"
       />
-      <p class="textSmall mt10">メールアドレス再入力</p>
+      <p class="textSmall mt10" v-show="!validate">メールアドレス再入力</p>
       <input
         class="formText formText--large mt10"
         type="email"
         placeholder="例) example@gmail.com"
         v-model="mailReEnter"
-        v-show="!personalData"
+        v-show="!validate"
         @keydown.enter.prevent="enterPrevent"
       />
-      <p class="formCheckLabel" v-show="personalData">{{ mail }}</p>
+      <p class="formCheckLabel" v-show="validate">{{ mail }}</p>
       <br />
       <p class="formCaution" v-if="checkMail != ''">{{ mailChecked }}</p>
     </dd>
@@ -52,10 +52,10 @@
         type="text"
         placeholder="例) メールフォームが壊れている"
         v-model="content"
-        v-show="!personalData"
+        v-show="!validate"
         @keydown.enter.prevent="enterPrevent"
       ></textarea>
-      <p class="formCheckLabel" v-show="personalData">{{ content }}</p>
+      <p class="formCheckLabel" v-show="validate">{{ content }}</p>
       <br />
       <p class="formCaution" v-if="checkContent != ''">{{ contentChecked }}</p>
     </dd>
