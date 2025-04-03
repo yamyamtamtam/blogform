@@ -34,7 +34,9 @@ const escapeHTML = (str) => {
 const validateInput = (data) => {
     const errors = [];
 
-    const checkBlank = (input) => input !== "";
+    const checkBlank = (input) => {
+        return !!(input && input.trim() !== "");
+    };
 
     const checkName = (input) => {
         if (!checkBlank(input)) return "お名前を入力してください。";
@@ -42,11 +44,13 @@ const validateInput = (data) => {
         return "";
     };
 
-    const checkMail = (mail) => {
+    const checkMail = (mail, mailReEnter) => {
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (mail.length > 254) return "メールアドレスは254文字以下で入力してください。";
         if (!checkBlank(mail)) return "メールアドレスを入力してください。";
         if (!emailPattern.test(mail)) return "メールアドレスの形式でご入力ください。";
+        if (!checkBlank(mailReEnter)) return "メールアドレス再入力を入力してください。";
+        if (mail !== mailReEnter) return "メールアドレスが一致しません。";
         return "";
     };
 
@@ -57,7 +61,7 @@ const validateInput = (data) => {
     };
 
     const nameError = checkName(data.name);
-    const mailError = checkMail(data.mail);
+    const mailError = checkMail(data.mail, data.mailReEnter);
     const contentError = checkContent(data.content);
 
     if (nameError) errors.push(nameError);

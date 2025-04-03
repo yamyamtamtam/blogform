@@ -57,6 +57,9 @@ export function useValidate() {
         } else if (!emailPattern.test(mail.value)) {
             mailChecked.value = "メールアドレスの形式でご入力ください。";
             errors.value++;
+        } else if (!checkBlank(mailReEnter.value)) {
+            mailChecked.value = "メールアドレス再入力を入力してください。";
+            errors.value++;
         } else if (mail.value !== mailReEnter.value) {
             mailChecked.value = "メールアドレスが一致しません。";
             errors.value++;
@@ -67,7 +70,6 @@ export function useValidate() {
     };
 
     const checkContent = (input) => {
-        console.log(input);
         if (!checkBlank(input)) {
             contentChecked.value = "お問い合わせ内容を入力してください。";
             errors.value++;
