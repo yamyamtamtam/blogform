@@ -128,7 +128,9 @@ const toInquiry = async () => {
     //バリデーションNGなら、エラーメッセージを表示
     console.log("バリデーションエラー", validationResult);
     errors.value = 1;
-    endMessage.value = "入力内容に不備があります。ご確認ください。";
+    if (!endMessage.value) {
+      endMessage.value = "入力内容に不備があります。ご確認ください。";
+    }
   }
   loader.value = false;
 };
