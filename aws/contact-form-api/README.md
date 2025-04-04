@@ -24,6 +24,20 @@ The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI
 * [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
 * [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
 
+## 環境切り替え方法
+
+### ローカル開発時の設定
+- /aws/contact-form-api/src/validate/app.mjsのendpoint: "http://host.docker.internal:8000"を出す
+- /aws/contact-form-api/src/sendMail/app.mjsのendpoint: "http://host.docker.internal:8000"を出す
+- /aws/contact-form-api/src/sendMail/app.mjsの「本番環境：SESで送信」セクションをコメントアウト
+- /aws/contact-form-api/src/sendMail/app.mjsの「モック環境：ログに出力」セクションのconsole.log4つを出す
+
+### 本番用設定
+- /aws/contact-form-api/src/validate/app.mjsのendpoint: "http://host.docker.internal:8000"をコメントアウト
+- /aws/contact-form-api/src/sendMail/app.mjsのendpoint: "http://host.docker.internal:8000"をコメントアウト
+- /aws/contact-form-api/src/sendMail/app.mjsの「本番環境：SESで送信」セクションを出す
+- /aws/contact-form-api/src/sendMail/app.mjsの「モック環境：ログに出力」セクションのconsole.log4つをコメントアウト
+
 ## Deploy the sample application
 
 The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.

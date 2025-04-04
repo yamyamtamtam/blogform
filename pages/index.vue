@@ -13,7 +13,10 @@
             @to-inquiry="toInquiry"
             @activate-payment="activatePayment"
           />
-          <p class="formCautionFull mt30" v-if="errors != 0 && endMessage == ''">
+          <p
+            class="formCautionFull mt30"
+            v-if="errors != 0 && endMessage == ''"
+          >
             入力内容に不備があります。ご確認ください。
           </p>
         </form>
@@ -30,7 +33,7 @@ import Header from "~/components/global/Header.vue";
 import Footer from "~/components/global/Footer.vue";
 import axios from "axios";
 import Loader from "~/components/utility/Loader.vue";
-import wait from '~/components/utility/wait.js';
+import wait from "~/components/utility/wait.js";
 import PersonalDataForm from "~/components/forms/PersonalDataForm.vue";
 import CheckPrivacy from "~/components/forms/CheckPrivacy.vue";
 import FormButtons from "~/components/forms/FormButtons.vue";
@@ -47,11 +50,13 @@ useSeoMeta({
   robots: "noindex, nofollow",
 });
 //フォームトップ用
-const formTop = ref(null)
+const formTop = ref(null);
 //ローダー
 const loader = useLoader();
 //エラーチェック用
 const errors = useErrors();
+
+const router = useRouter();
 
 //個人情報保護方針に同意するチェック用
 const checkPrivacy = useCheckPrivacy();
@@ -67,22 +72,34 @@ const thanks = ref(false);
 const apiBaseUrl = "http://localhost:3001"; //ローカル用。本番ではコメントアウト
 let sessionId = ref("");
 
-
-const { validate, name, mail, mailReEnter, content, nameChecked, mailChecked, contentChecked, } = useValidate();
+const {
+  validate,
+  name,
+  mail,
+  mailReEnter,
+  content,
+  nameChecked,
+  mailChecked,
+  contentChecked,
+} = useValidate();
 const { personalData } = usePersonalData();
 
 const validationPersonal = async () => {
   try {
-    const res = await axios.post(`${apiBaseUrl}/validate`, {
-      name: name.value,
-      mail: mail.value,
-      mailReEnter: mailReEnter.value,
-      content: content.value,
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
+    const res = await axios.post(
+      `${apiBaseUrl}/validate`,
+      {
+        name: name.value,
+        mail: mail.value,
+        mailReEnter: mailReEnter.value,
+        content: content.value,
       },
-    });
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
     return res.data;
   } catch (err) {
     console.log(err);
@@ -92,16 +109,16 @@ const validationPersonal = async () => {
       mailChecked.value = errors.find((e) => e.includes("メール")) || "";
       mailChecked.value = errors.find((e) => e.includes("メール再入力")) || "";
     } else {
-      if (err.code === 'ERR_NETWORK') {
+      if (err.code === "ERR_NETWORK") {
         console.error("ネットワークエラー", err);
         endMessage.value = "ネットワークエラーが発生しました。";
-      } else if (err.code === 'ERR_BAD_REQUEST') {
+      } else if (err.code === "ERR_BAD_REQUEST") {
         console.error("不正なリクエスト", err);
         endMessage.value = "不正なリクエストです。";
-      } else if (err.code === 'ERR_TIMEOUT') {
+      } else if (err.code === "ERR_TIMEOUT") {
         console.error("タイムアウト", err);
         endMessage.value = "タイムアウトしました。";
-      } else if (err.code === 'ERR_BAD_RESPONSE') {
+      } else if (err.code === "ERR_BAD_RESPONSE") {
         console.error("不正なレスポンス", err);
         endMessage.value = "不正なレスポンスです。";
       }
@@ -115,18 +132,21 @@ const toInquiry = async () => {
   //フロントでのバリデーション
   let validationResult = false;
   validationResult = await validationPersonal();
-  if (validationResult && validationResult.message === 'success') {
+  if (validationResult && validationResult.message === "success") {
     //バリデーションOKなら、確認画面へ遷移
     validate.value = true;
     errors.value = 0;
     endMessage.value = "";
-    formTop.value?.scrollIntoView({ behavior: 'smooth' });
-    if (validationResult.hasOwnProperty('sessionId') && validationResult.sessionId != null && validationResult.sessionId !== '') {
-      sessionId = validationResult.sessionId;
+    formTop.value?.scrollIntoView({ behavior: "smooth" });
+    if (
+      validationResult.hasOwnProperty("sessionId") &&
+      validationResult.sessionId != null &&
+      validationResult.sessionId !== ""
+    ) {
+      sessionId.value = validationResult.sessionId;
     }
   } else {
     //バリデーションNGなら、エラーメッセージを表示
-    console.log("バリデーションエラー", validationResult);
     errors.value = 1;
     if (!endMessage.value) {
       endMessage.value = "入力内容に不備があります。ご確認ください。";
@@ -142,7 +162,7 @@ const backReInput = async () => {
   errors.value = 0;
   endMessage.value = "";
   loader.value = false;
-  formTop.value?.scrollIntoView({ behavior: 'smooth' });
+  formTop.value?.scrollIntoView({ behavior: "smooth" });
 };
 
 const submitAll = async () => {
@@ -165,29 +185,37 @@ const sendMail = async () => {
   loader.value = true;
   errors.value = 0;
   try {
-    const response = await axios.get(
-      "https://ikghifjp9k.execute-api.ap-northeast-1.amazonaws.com/production/mail/?name=" +
-        encodeURIComponent(name.value) +
-        "&mail=" +
-        encodeURIComponent(mail.value),
+    console.log(sessionId.value, name.value, mail.value, content.value);
+    const response = await axios.post(
+      `${apiBaseUrl}/send`,
+      {
+        sessionId: sessionId.value,
+        name: name.value,
+        mail: mail.value,
+        content: content.value,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
     );
+
     const data = response.data;
-    if (data.statusCode === 200) {
+
+    if (response.status === 200 && data.message === "送信完了") {
       thanks.value = true;
-      if (thanks.value) {
-        window.location.href = "./thanks";
-      }
+      router.push("/thanks");
     } else {
-      loader.value = false;
-      validate.value = false;
-      endMessage.value =
-        "メールの送信に失敗しました。お手数おかけしますが、4leafclover1214@gamil.comまでお問い合わせください。";
+      throw new Error("送信失敗");
     }
   } catch (error) {
-    loader.value = false;
     validate.value = false;
     endMessage.value =
-      "メールの送信に失敗しました。お手数おかけしますが、4leafclover1214@gamil.comまでお問い合わせください。";
+      "メールの送信に失敗しました。お手数おかけしますが、4leafclover1214@gmail.comまでお問い合わせください。";
+    console.error("送信エラー", error);
+  } finally {
+    loader.value = false;
   }
 };
 </script>

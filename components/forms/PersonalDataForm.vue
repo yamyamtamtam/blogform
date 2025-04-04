@@ -54,7 +54,9 @@
         v-model="content"
         v-show="!validate"
       ></textarea>
-      <p class="formCheckLabel formCheckLabel--teatarea mt10" v-show="validate">{{ content }}</p>
+      <p class="formCheckLabel formCheckLabel--teatarea mt10" v-show="validate">
+        {{ content }}
+      </p>
       <br />
       <p class="formCaution" v-if="checkContent != ''">{{ contentChecked }}</p>
     </dd>
@@ -127,13 +129,13 @@ dl dt span {
   font-size: 0.6rem;
   margin: 10px 0;
 }
-.formCheckLabel{
+.formCheckLabel {
   color: #333;
   font-size: 0.9rem;
-  padding:10px 20px;
+  padding: 10px 20px;
   background: #f0f0f0;
 }
-.formCheckLabel--teatarea{
+.formCheckLabel--teatarea {
   white-space: pre-line;
 }
 </style>
