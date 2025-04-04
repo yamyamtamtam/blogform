@@ -16,10 +16,7 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^2.3.0",
     "axios": "^1.6.7",
-    "bubbly-bg": "^1.0.0",
-    "prettier": "^3.5.1",
-    "stripe": "^14.14.0"
+    "prettier": "^3.5.1"
   }
 }

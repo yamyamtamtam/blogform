@@ -8,14 +8,14 @@
   </button>
   <button
     class="backButton mt40"
-    v-show="checkPrivacy && validationResult"
+    v-show="checkPrivacy && validate"
     v-on:click.prevent="backReInput()"
   >
     入力し直す
   </button>
   <button
     class="submitButton mt40"
-    v-show="checkPrivacy"
+    v-show="checkPrivacy && !validate"
     v-on:click.prevent="toInquiry()"
   >
     確認画面へ進む
@@ -27,6 +27,8 @@
 const checkPrivacy = useCheckPrivacy();
 
 const { validationPersonal } = usePersonalData();
+//個人情報入力用
+const { validate } = useValidate();
 
 const emit = defineEmits(["submit-all", "back-reInput", "to-inquiry"]);
 
