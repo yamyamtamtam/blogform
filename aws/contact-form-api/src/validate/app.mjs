@@ -8,8 +8,9 @@ import {
 
 // DynamoDB client
 const client = new DynamoDBClient({
-    region: "ap-northeast-1"
-}); // ←リージョンは変更可
+    region: "ap-northeast-1",
+    endpoint: "http://host.docker.internal:8000" // テスト時のみ。本番では外す
+});
 
 // HTMLエスケープ
 const escapeHTML = (str) => {
@@ -33,7 +34,9 @@ const escapeHTML = (str) => {
 const validateInput = (data) => {
     const errors = [];
 
-    const checkBlank = (input) => input !== "";
+    const checkBlank = (input) => {
+        return !!(input && input.trim() !== "");
+    };
 
     const checkName = (input) => {
         if (!checkBlank(input)) return "お名前を入力してください。";
@@ -46,6 +49,7 @@ const validateInput = (data) => {
         if (mail.length > 254) return "メールアドレスは254文字以下で入力してください。";
         if (!checkBlank(mail)) return "メールアドレスを入力してください。";
         if (!emailPattern.test(mail)) return "メールアドレスの形式でご入力ください。";
+        if (!checkBlank(mailReEnter)) return "メールアドレス再入力を入力してください。";
         if (mail !== mailReEnter) return "メールアドレスが一致しません。";
         return "";
     };
@@ -111,7 +115,7 @@ export const handler = async (event) => {
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: "バリデーション成功、セッションを保存しました。",
+                message: "success",
                 sessionId,
             }),
         };
@@ -120,7 +124,7 @@ export const handler = async (event) => {
         return {
             statusCode: 500,
             body: JSON.stringify({
-                message: "サーバーエラーが発生しました。"
+                message: "server error"
             }),
         };
     }

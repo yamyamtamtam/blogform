@@ -73,3 +73,12 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## 環境切り替え方法
+
+### ローカル開発時の設定
+- /contact/pages/index.vueの const apiBaseUrl = "http://localhost:3001";を出す
+
+### 本番用設定
+- /contact/pages/index.vueの const apiBaseUrl = "http://localhost:3001";をコメントアウトして、本番用の方を出す
+

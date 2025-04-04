@@ -1,117 +1,133 @@
 import {
-    SESClient,
-    SendEmailCommand
-} from "@aws-sdk/client-ses";
-import {
     DynamoDBClient,
-    GetItemCommand
+    GetItemCommand,
+    DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
+import {
+    SESClient,
+    SendEmailCommand,
+} from "@aws-sdk/client-ses";
 
-const REGION = "ap-northeast-1"; // 適宜変更
+// 設定
+const REGION = "ap-northeast-1";
 const TABLE_NAME = "ContactSession";
 const TO_ADDRESS = process.env.TO_ADDRESS;
 
-const ses = new SESClient({
-    region: REGION
-});
+// DynamoDBクライアント（本番用）
+// const db = new DynamoDBClient({ region: REGION });
+// ローカル用（必要に応じて切り替え）
 const db = new DynamoDBClient({
+    region: REGION,
+    endpoint: "http://host.docker.internal:8000"
+});
+
+// SESクライアント（本番用）
+const ses = new SESClient({
     region: REGION
 });
 
 export const handler = async (event) => {
     try {
         const body = JSON.parse(event.body || "{}");
-        const sessionId = body.sessionId;
+        const {
+            sessionId,
+            name,
+            mail,
+            content
+        } = body;
 
-        if (!sessionId) {
+        console.log(sessionId, name, mail, content);
+
+
+        if (!sessionId || !name || !mail || !content) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({
-                    message: "セッションIDが必要です。"
+                    message: "リクエストに必要な情報が不足しています。"
                 }),
             };
         }
 
+        // セッションの存在チェック
         const getCommand = new GetItemCommand({
             TableName: TABLE_NAME,
             Key: {
                 sessionId: {
                     S: sessionId
-                },
+                }
             },
         });
 
         const result = await db.send(getCommand);
-        const item = result.Item;
-
-        if (!item) {
+        if (!result.Item) {
             return {
-                statusCode: 404,
+                statusCode: 403,
                 body: JSON.stringify({
-                    message: "セッションが見つかりません。"
+                    message: "セッションが無効、または期限切れです。"
                 }),
             };
         }
 
-        const name = item.name.S;
-        const mail = item.mail.S;
-        const content = item.content.S;
+        const adminText = `名前: ${name}\nメール: ${mail}\n内容:\n${content}`;
+        const userText = `${name} 様\n\nお問い合わせありがとうございます。\n以下の内容で受け付けました：\n\n----------------\nお名前: ${name}\nメール: ${mail}\n内容:\n${content}\n----------------\n\n担当者より改めてご連絡いたします。\n`;
 
-        // 管理者宛メール
-        const adminMail = new SendEmailCommand({
-            Destination: {
-                ToAddresses: [TO_ADDRESS],
-            },
-            Message: {
-                Subject: {
-                    Data: "【お問い合わせ】フォームからのメッセージ",
-                },
-                Body: {
-                    Text: {
-                        Data: `名前: ${name}\nメール: ${mail}\n内容:\n${content}`,
-                    },
-                },
-            },
-            Source: TO_ADDRESS,
-            ReplyToAddresses: [mail],
-        });
+        // =====================
+        // 本番環境：SESで送信
+        // =====================
+        /*
+      const adminMail = new SendEmailCommand({
+        Destination: { ToAddresses: [TO_ADDRESS] },
+        Message: {
+          Subject: { Data: "【お問い合わせ】フォームからのメッセージ" },
+          Body: { Text: { Data: adminText } },
+        },
+        Source: TO_ADDRESS,
+        ReplyToAddresses: [mail],
+      });
+  
+      const userMail = new SendEmailCommand({
+        Destination: { ToAddresses: [mail] },
+        Message: {
+          Subject: { Data: "【お問い合わせありがとうございます】" },
+          Body: { Text: { Data: userText } },
+        },
+        Source: TO_ADDRESS,
+        ReplyToAddresses: [TO_ADDRESS],
+      });
+  
+      await Promise.all([ses.send(adminMail), ses.send(userMail)]);
+      */
 
-        // ユーザー宛メール
-        const userMail = new SendEmailCommand({
-            Destination: {
-                ToAddresses: [mail],
-            },
-            Message: {
-                Subject: {
-                    Data: "【お問い合わせありがとうございます】",
-                },
-                Body: {
-                    Text: {
-                        Data: `${name} 様\n\nお問い合わせありがとうございます。\n以下の内容で受け付けました：\n\n----------------\nお名前: ${name}\nメール: ${mail}\n内容:\n${content}\n----------------\n\n担当者より改めてご連絡いたします。\n`,
-                    },
-                },
-            },
-            Source: TO_ADDRESS,
-            ReplyToAddresses: [TO_ADDRESS],
-        });
+        // =====================
+        // モック環境：ログに出力
+        // =====================
+        console.log("送信先（管理者）:", TO_ADDRESS);
+        console.log("メール内容（管理者）:", adminText);
+        console.log("送信先（ユーザー）:", mail);
+        console.log("メール内容（ユーザー）:", userText);
 
-        await Promise.all([
-            ses.send(adminMail),
-            ses.send(userMail),
-        ]);
+        // セッション削除（再送防止）
+        await db.send(new DeleteItemCommand({
+            TableName: TABLE_NAME,
+            Key: {
+                sessionId: {
+                    S: sessionId
+                }
+            },
+        }));
 
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: "メール送信に成功しました（管理者・ユーザー）"
+                message: "送信完了"
             }),
         };
     } catch (err) {
-        console.error(err);
+        console.error("送信エラー:", err);
         return {
             statusCode: 500,
             body: JSON.stringify({
-                message: "メール送信に失敗しました。"
+                message: "サーバーエラーが発生しました。"
             }),
         };
     }
