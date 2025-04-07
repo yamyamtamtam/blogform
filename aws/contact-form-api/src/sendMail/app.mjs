@@ -14,12 +14,16 @@ const TABLE_NAME = "ContactSession";
 const TO_ADDRESS = process.env.TO_ADDRESS;
 
 // DynamoDBクライアント（本番用）
-// const db = new DynamoDBClient({ region: REGION });
+const db = new DynamoDBClient({
+    region: REGION
+});
 // ローカル用（必要に応じて切り替え）
+/*
 const db = new DynamoDBClient({
     region: REGION,
     endpoint: "http://host.docker.internal:8000"
 });
+*/
 
 // SESクライアント（本番用）
 const ses = new SESClient({
@@ -74,37 +78,53 @@ export const handler = async (event) => {
         // =====================
         // 本番環境：SESで送信
         // =====================
-        /*
-      const adminMail = new SendEmailCommand({
-        Destination: { ToAddresses: [TO_ADDRESS] },
-        Message: {
-          Subject: { Data: "【お問い合わせ】フォームからのメッセージ" },
-          Body: { Text: { Data: adminText } },
-        },
-        Source: TO_ADDRESS,
-        ReplyToAddresses: [mail],
-      });
-  
-      const userMail = new SendEmailCommand({
-        Destination: { ToAddresses: [mail] },
-        Message: {
-          Subject: { Data: "【お問い合わせありがとうございます】" },
-          Body: { Text: { Data: userText } },
-        },
-        Source: TO_ADDRESS,
-        ReplyToAddresses: [TO_ADDRESS],
-      });
-  
-      await Promise.all([ses.send(adminMail), ses.send(userMail)]);
-      */
+        const adminMail = new SendEmailCommand({
+            Destination: {
+                ToAddresses: [TO_ADDRESS]
+            },
+            Message: {
+                Subject: {
+                    Data: "【お問い合わせ】フォームからのメッセージ"
+                },
+                Body: {
+                    Text: {
+                        Data: adminText
+                    }
+                },
+            },
+            Source: TO_ADDRESS,
+            ReplyToAddresses: [mail],
+        });
+
+        const userMail = new SendEmailCommand({
+            Destination: {
+                ToAddresses: [mail]
+            },
+            Message: {
+                Subject: {
+                    Data: "【お問い合わせありがとうございます】"
+                },
+                Body: {
+                    Text: {
+                        Data: userText
+                    }
+                },
+            },
+            Source: TO_ADDRESS,
+            ReplyToAddresses: [TO_ADDRESS],
+        });
+
+        await Promise.all([ses.send(adminMail), ses.send(userMail)]);
 
         // =====================
         // モック環境：ログに出力
         // =====================
+        /*
         console.log("送信先（管理者）:", TO_ADDRESS);
         console.log("メール内容（管理者）:", adminText);
         console.log("送信先（ユーザー）:", mail);
         console.log("メール内容（ユーザー）:", userText);
+        */
 
         // セッション削除（再送防止）
         await db.send(new DeleteItemCommand({
@@ -118,6 +138,10 @@ export const handler = async (event) => {
 
         return {
             statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "https://yamyamtamtam.tech", // 本番用
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
             body: JSON.stringify({
                 message: "送信完了"
             }),

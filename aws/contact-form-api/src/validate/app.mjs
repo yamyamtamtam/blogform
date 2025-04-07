@@ -9,7 +9,7 @@ import {
 // DynamoDB client
 const client = new DynamoDBClient({
     region: "ap-northeast-1",
-    endpoint: "http://host.docker.internal:8000" // テスト時のみ。本番では外す
+    //endpoint: "http://host.docker.internal:8000" // テスト時のみ。本番では外す
 });
 
 // HTMLエスケープ
@@ -114,6 +114,10 @@ export const handler = async (event) => {
 
         return {
             statusCode: 200,
+            headers: {
+                "Access-Control-Allow-Origin": "https://yamyamtamtam.tech", // 本番用
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
             body: JSON.stringify({
                 message: "success",
                 sessionId,

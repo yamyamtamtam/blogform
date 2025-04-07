@@ -4,7 +4,7 @@ Description: Contact Form API with SAM
 
 Globals:
   Function:
-    Timeout: 10
+    Timeout: 120
     Runtime: nodejs18.x
 
 Resources:
@@ -16,7 +16,7 @@ Resources:
       Cors:
         AllowMethods: "'POST,OPTIONS'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: "'*'"
+        AllowOrigin: "'https://yamyamtamtam.tech'"
 
   ValidateFunction:
     Type: AWS::Serverless::Function
