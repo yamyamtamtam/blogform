@@ -72,6 +72,20 @@ const validateInput = (data) => {
 };
 
 export const handler = async (event) => {
+    //本番時プリフライトリクエストのために追加
+    console.log(event);
+    // CORS対応（プリフライトリクエスト）
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': 'https://yamyamtamtam.tech',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            },
+            body: '',
+        };
+    }
     try {
         const body = JSON.parse(event.body || "{}");
         const errors = validateInput(body);
@@ -127,6 +141,10 @@ export const handler = async (event) => {
         console.error(err);
         return {
             statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "https://yamyamtamtam.tech", //本番用
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
             body: JSON.stringify({
                 message: "server error"
             }),

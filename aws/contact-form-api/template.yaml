@@ -40,6 +40,12 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: ContactSession
+        - Statement:
+                  - Effect: Allow
+                    Action:
+                      - ses:SendEmail
+                    Resource: 
+                      - arn:aws:ses:ap-northeast-1:540802848657:identity/yamyamtamtam.tech
       Events:
         SendMailAPI:
           Type: Api
@@ -50,7 +56,8 @@ Resources:
       Environment:
         Variables:
           TO_ADDRESS: 4leafclover1214@gmail.com
-        
+          FROM_ADDRESS: contact@yamyamtamtam.tech
+
   ContactSessionTable:
     Type: AWS::DynamoDB::Table
     Properties:

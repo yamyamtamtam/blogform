@@ -11,6 +11,7 @@ import {
 // 設定
 const REGION = "ap-northeast-1";
 const TABLE_NAME = "ContactSession";
+const FROM_ADDRESS = process.env.FROM_ADDRESS;
 const TO_ADDRESS = process.env.TO_ADDRESS;
 
 // DynamoDBクライアント（本番用）
@@ -31,6 +32,20 @@ const ses = new SESClient({
 });
 
 export const handler = async (event) => {
+    //本番時プリフライトリクエストのために追加
+    console.log(event);
+    // CORS対応（プリフライトリクエスト）
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': 'https://yamyamtamtam.tech',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            },
+            body: '',
+        };
+    }
     try {
         const body = JSON.parse(event.body || "{}");
         const {
@@ -79,6 +94,7 @@ export const handler = async (event) => {
         // 本番環境：SESで送信
         // =====================
         const adminMail = new SendEmailCommand({
+            Source: FROM_ADDRESS,
             Destination: {
                 ToAddresses: [TO_ADDRESS]
             },
@@ -92,11 +108,11 @@ export const handler = async (event) => {
                     }
                 },
             },
-            Source: TO_ADDRESS,
             ReplyToAddresses: [mail],
         });
 
         const userMail = new SendEmailCommand({
+            Source: FROM_ADDRESS,
             Destination: {
                 ToAddresses: [mail]
             },
@@ -110,7 +126,6 @@ export const handler = async (event) => {
                     }
                 },
             },
-            Source: TO_ADDRESS,
             ReplyToAddresses: [TO_ADDRESS],
         });
 
@@ -150,6 +165,10 @@ export const handler = async (event) => {
         console.error("送信エラー:", err);
         return {
             statusCode: 500,
+            headers: {
+                "Access-Control-Allow-Origin": "https://yamyamtamtam.tech", //本番用
+                "Access-Control-Allow-Headers": "Content-Type",
+            },
             body: JSON.stringify({
                 message: "サーバーエラーが発生しました。"
             }),
