@@ -69,7 +69,9 @@ const thanks = ref(false);
 
 //フロント側でのリアルタイムバリデーション（PersonalDataFormコンポーネント）と、確認用画面へ行くときのバリーデションの2重で行う。
 // 確認用画面ではサーバー側にデータを送信して、バリデーションし、セッションidをもらうことでAPIの不正利用を防ぐ。
-const apiBaseUrl = "http://localhost:3001"; //ローカル用。本番ではコメントアウト
+//const apiBaseUrl = "http://localhost:3001"; //ローカル用。本番ではコメントアウト
+const apiBaseUrl =
+  "https://bm4vlu45n9.execute-api.ap-northeast-1.amazonaws.com/dev"; //本番用。ローカルではコメントアウト
 let sessionId = ref("");
 
 const {
@@ -167,17 +169,9 @@ const backReInput = async () => {
 
 const submitAll = async () => {
   loader.value = true;
-  //フロントでのバリデーション
-  let validationResult = false;
-  validationResult = await validationPersonal();
-  if (validationResult) {
-    //バリデーションOKなら、APIを叩く
-    await sendMail();
-  } else {
-    //バリデーションNGなら、エラーメッセージを表示
-    errors.value = 1;
-    endMessage.value = "入力内容に不備があります。ご確認ください。";
-  }
+  //確認画面でのバリデーションは行わないことにした。したい場合はgithubの履歴参照
+  //バリデーションOKなら、APIを叩く
+  await sendMail();
   loader.value = false;
 };
 
@@ -185,7 +179,6 @@ const sendMail = async () => {
   loader.value = true;
   errors.value = 0;
   try {
-    console.log(sessionId.value, name.value, mail.value, content.value);
     const response = await axios.post(
       `${apiBaseUrl}/send`,
       {
