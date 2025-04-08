@@ -170,17 +170,9 @@ const backReInput = async () => {
 
 const submitAll = async () => {
   loader.value = true;
-  //フロントでのバリデーション
-  let validationResult = false;
-  validationResult = await validationPersonal();
-  if (validationResult) {
-    //バリデーションOKなら、APIを叩く
-    await sendMail();
-  } else {
-    //バリデーションNGなら、エラーメッセージを表示
-    errors.value = 1;
-    endMessage.value = "入力内容に不備があります。ご確認ください。";
-  }
+  //確認画面でのバリデーションは行わないことにした。したい場合はgithubの履歴参照
+  //バリデーションOKなら、APIを叩く
+  await sendMail();
   loader.value = false;
 };
 

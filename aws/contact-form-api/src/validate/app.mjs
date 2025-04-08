@@ -93,6 +93,10 @@ export const handler = async (event) => {
         if (errors.length > 0) {
             return {
                 statusCode: 400,
+                headers: {
+                    "Access-Control-Allow-Origin": "https://yamyamtamtam.tech",
+                    "Access-Control-Allow-Headers": "Content-Type",
+                },
                 body: JSON.stringify({
                     message: "バリデーションに失敗しました。",
                     errors,
